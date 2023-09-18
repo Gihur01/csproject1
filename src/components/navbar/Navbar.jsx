@@ -1,3 +1,6 @@
+"use client"
+import { Padding } from '@mui/icons-material'
+import { Box } from '@mui/material'
 import Link from 'next/link'
 import React from 'react'
 
@@ -26,15 +29,29 @@ const paths = [
 
 const Navbar = () => {
   return (
-    <div>
+    <Box sx={
+        {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background:"#6397ff",
+        }}>
         {
             paths.map(link => (
-                <Link href={link.path} key={link.id}>
+                <Box key={link.id}>
+
+                <Link href={link.path} style={{
+                    Padding: '30px',
+                    color: 'white',
+                    textDecoration: 'none',
+
+                }}>
                     {link.title}
                 </Link>
+                </Box>
             ))
         }
-    </div>
+    </Box>
   )
 }
 

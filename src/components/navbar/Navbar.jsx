@@ -35,6 +35,7 @@ const Navbar = () => {
             alignItems: 'center',
             gap: '10px',
             background:"#6397ff",
+            padding: 0,
         }}>
         {
             paths.map(link => (

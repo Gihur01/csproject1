@@ -19,26 +19,50 @@ export default function New() {
       { id: 1, name: 'Neurology', },
       { id: 2, name: 'External', },
       { id: 3, name: 'Internal', },
-    ]
+    ];
 
-  const [department, changeDepartment] = useState('')
-  const [appointmentType, changeAppointmentType] = useState('')
+  const [department, changeDepartment] = useState('');
+  const [appointmentType, changeAppointmentType] = useState('');
 
-
+  function disabledTime(value,view){
+    times=getOccupiedTimes(department,appointmentType)
+    let isInRange=false
+    /* the "times" will be a list of all time ranges that are occupied.
+    each range is a list of length 2, start and finish times
+    loop through each of the time ranges,
+    and check if value.minute is within that range. */
+    if(view ==="minues"){
+      for(let range of times){
+        if(range[0]<= value.minute() && range[1]>=value.minute()){
+          isInRange=true;
+          break;
+        }
+      }
+    }
+    
+    return isInRange;
+  }
 
   return (
     <Container component="main" maxWidth="lg">
 
-      <Typography variant="h3">
+      <Typography variant="h4" marginBottom={5} align='center'>
         New Appointment
       </Typography>
       <Grid 
         sx={{
           display: 'flex',
+          justifyContent: 'space-around'
         }}
       >
+        <Box>
+
+        <Typography variant="h6" marginBottom={.5}>
+          Select a department
+        </Typography>
 
         <FormControl fullWidth>
+          
           <InputLabel id="department-select-label">Department</InputLabel>
           <Select
             labelId="department-select-label"
@@ -57,6 +81,12 @@ export default function New() {
             <MenuItem value={3}>Internal</MenuItem>
           </Select>
         </FormControl>
+        </Box>
+          
+        <Box>
+        <Typography variant="h6" marginBottom={.5}>
+          Select the type of service
+        </Typography>
 
         <FormControl fullWidth>
           <InputLabel id="select-type-label">Type</InputLabel>
@@ -84,9 +114,10 @@ export default function New() {
         /> */}
 
         </FormControl>
+        </Box>
       </Grid>
 
-      <Box border={1}>
+      <Box border={1} padding={1}>
         dummy text
       </Box>
 

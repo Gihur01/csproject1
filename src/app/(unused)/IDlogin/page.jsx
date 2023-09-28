@@ -14,7 +14,7 @@ const Login = () => {
       <h3>
         Please log in
       </h3>
-      <input className={styles.login-input-bar} onChange={e=>changeIdNum(e.target.value)}/>
+      {/* <input className={styles.login-input-bar} onChange={e=>changeIdNum(e.target.value)}/> */}
       <button className='login-submit-button' onClick={e=>submit(e.target.value)}>login</button>
     </div>
   )

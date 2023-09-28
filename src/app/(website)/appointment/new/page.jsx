@@ -44,9 +44,9 @@ export default function New() {
   }
 
   return (
-    <Container component="main" maxWidth="lg">
+    <Container component="main" maxWidth="lg" sx={{}}>
 
-      <Typography variant="h4" marginBottom={5} align='center'>
+      <Typography variant="h4" marginBottom={4} align='center'>
         New Appointment
       </Typography>
       <Grid 

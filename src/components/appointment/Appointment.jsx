@@ -1,11 +1,11 @@
+"use cllient"
 import React from 'react'
-import { Container, Box, Button, List, ListItem, ListItemButton, ListItemText, ListItemIcon } from '@mui/material';
+import { Container, Box, Button, List, ListItem, ListItemButton, ListItemText, ListItemIcon, Link, span } from '@mui/material';
 
 
 const Appointment = ({ appointments }) => {
     return (
         <div>
-
             <Container sx={{
                 marginTop: 2,
                 display: 'inline-block',
@@ -15,15 +15,33 @@ const Appointment = ({ appointments }) => {
                 border: 1,
             }} >
                 <List>
-                    {appointments.map(app=>(
-                    <ListItem key={app.id} disablePadding>
-                        <ListItemButton>
-                            {/* <ListItemIcon>
+                    {appointments.map(app => (
+                        <ListItem key={app.id} disablePadding>
+                            <ListItemButton>
+                                {/* <ListItemIcon>
                             </ListItemIcon> */}
-                            <ListItemText primary="Inbox" />
-                        </ListItemButton>
-                    </ListItem>))}
-                    
+                                <ListItemText primary={app.type} secondary={
+                                    <Box sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        width: '50%',
+                                    }}>
+                                        <span>
+
+                                            {app.date}
+                                        </span>
+                                        <span>
+                                            {app.category}
+                                        </span>
+                                        <span>
+                                            {app.time}
+                                        </span>
+                                    </Box>
+                                } />
+                            </ListItemButton>
+                        </ListItem>))}
+
                 </List>
 
             </Container>

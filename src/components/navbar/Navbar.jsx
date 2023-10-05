@@ -24,7 +24,7 @@ const Navbar = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            background:"#6397ff",
+            background:"#3498db",
         }}>
         {
             paths.map(link => (
@@ -33,6 +33,7 @@ const Navbar = () => {
                     height: '2rem',
                     display: 'flex',
                     alignItems: 'center',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                 }}
 
                 >
@@ -40,10 +41,12 @@ const Navbar = () => {
                 <Button component={Link} 
                 href={link.path}
                 color='primary'
+                
                 style={{
                     color: 'white',
                     textDecoration: 'none',
                     fontWeight: 600,
+                    
                 }}>
                     {link.title}
                 </Button>

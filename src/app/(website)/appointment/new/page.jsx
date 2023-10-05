@@ -1,8 +1,6 @@
 "use client"
 import React from 'react';
 import { useState } from 'react';
-import CssBaseline from '@mui/material/CssBaseline';
-import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -10,7 +8,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { StaticDateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
-import { TextField, FormControlLabel, InputLabel, MenuItem, Select, Button, FormControl, Box, Container, Typography, Checkbox } from '@mui/material';
+import { TextField, FormControlLabel, InputLabel, MenuItem, Select, Button, FormControl, Box, Container, Typography } from '@mui/material';
+import {db} from '../../../firebase';
+import { doc, setDoc } from "firebase/firestore"; 
 
 
 export default function New() {
@@ -23,6 +23,9 @@ export default function New() {
 
   const [department, changeDepartment] = useState('');
   const [appointmentType, changeAppointmentType] = useState('');
+
+
+    
 
   function disabledTime(value,view){
     times=getOccupiedTimes(department,appointmentType)

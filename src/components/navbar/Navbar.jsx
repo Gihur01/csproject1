@@ -11,7 +11,7 @@ const paths = [
         path: '/dashboard'
     },
     {
-        id: 5,
+        id: 2,
         title: 'Profile',
         path: '/profile'
     },

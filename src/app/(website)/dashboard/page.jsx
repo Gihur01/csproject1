@@ -30,16 +30,16 @@ const Dashboard = () => {
     e.preventDefault();
   }
 
-  useEffect(() => {
+/*   useEffect(() => {
     const q= query(collection(db,'appointments'))
-    const unsubscribe = onSnapshot(q, (querySnapshot) =>{
+    const unsubscribe = onSnapshot((q, querySnapshot) =>{
       let appsArr=[]
       querySnapshot.forEach((doc)=>{
         itemsArr.push({...doc.data(),id:doc.id})
       })
       setAppointmentList(appsArr)
     });
-  },[]);
+  },[]); */
 
 
   const [appointmentList, setAppointmentList] = useState([])

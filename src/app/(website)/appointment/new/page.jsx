@@ -1,16 +1,26 @@
 "use client"
 import React from 'react';
 import { useState } from 'react';
-import Grid from '@mui/material/Grid';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { StaticDateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
-import { TextField, FormControlLabel, InputLabel, MenuItem, Select, Button, FormControl, Box, Container, Typography } from '@mui/material';
-import {db} from '../../../firebase';
-import { doc, setDoc } from "firebase/firestore"; 
+import { Grid, InputLabel, MenuItem, Select, FormControl, Box, Container, Typography } from '@mui/material';
+
+import { doc, setDoc, getDocs, collection, query } from "firebase/firestore"; 
+
+import { db } from '../../../firebase'
+
+const appsRef = collection(db, "appointments");
+const appsList = []
+const querySnapshot = await getDocs(appsRef);
+querySnapshot.forEach((doc) => {
+  appsList.push({id: doc.id, ...doc.data()});
+}); 
+appsList.forEach((doc) => {
+  console.log(doc.datetime);
+})
 
 
 export default function New() {
@@ -18,7 +28,13 @@ export default function New() {
     [
       { id: 1, name: 'Neurology', },
       { id: 2, name: 'External', },
-      { id: 3, name: 'Internal', },
+      { id: 3, name: 'Internal medicine', },
+      { id: 4, name: 'Orthopedics', },
+      { id: 5, name: 'Psychiatry', },
+      { id: 6, name: 'Gastroenterology', },
+      { id: 7, name: 'Dermatology', },
+      { id: 8, name: 'Ophthalmology', },
+      { id: 9, name: 'Pediatrics', },
     ];
 
   const [department, changeDepartment] = useState('');

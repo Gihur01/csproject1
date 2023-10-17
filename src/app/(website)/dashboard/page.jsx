@@ -3,9 +3,17 @@ import React from 'react'
 import { useState, useEffect } from 'react'
 import Appointment from '@/components/appointment/Appointment'
 import { Container, Box, Button, Link } from '@mui/material';
-import { doc, getDoc, querySnapshot, collection, query } from "firebase/firestore"; 
-import {db} from '../../firebase'
+import { doc, getDocs, collection, query } from "firebase/firestore"; 
 
+import { db } from '../../firebase'
+
+const profilesRef = collection(db, "appointments");
+const profileList = []
+const querySnapshot = await getDocs(profilesRef);
+querySnapshot.forEach((doc) => {
+  // doc.data() is never undefined for query doc snapshots
+  profileList.push({id: doc.id, ...doc.data()});
+});
 
 const testData = [
   {

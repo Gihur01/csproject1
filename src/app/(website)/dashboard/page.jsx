@@ -5,7 +5,7 @@ import Appointment from '@/components/appointment/Appointment'
 import { Container, Box, Button, Link } from '@mui/material';
 import { doc, getDocs, collection, query } from "firebase/firestore"; 
 
-import { db } from '../../firebase'
+import { db } from '../../../../firebase'
 
 const profilesRef = collection(db, "appointments");
 const profileList = []

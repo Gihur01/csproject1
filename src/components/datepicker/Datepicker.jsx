@@ -1,5 +1,4 @@
 import React from 'react';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { StaticDateTimePicker } from '@mui/x-date-pickers';
@@ -18,10 +17,10 @@ appsList.forEach((doc) => {
   console.log(doc.datetime);
 })   */
 
-export default function Datepicker({props}){
+export default function Datepicker(){
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <DemoContainer components={['DateTimePicker']}>
+    <StaticDateTimePicker>
       <StaticDateTimePicker
         defaultValue={dayjs()}
         disablePast
@@ -29,7 +28,7 @@ export default function Datepicker({props}){
           maxWidth: 400,
         }}
       />
-    </DemoContainer>
+    </StaticDateTimePicker>
   </LocalizationProvider>
   )
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Grid, Paper, Container, Typography, Button } from '@mui/material';
-import { db } from '../../firebase'
+import { db } from '../../../../firebase'
 import { collection, doc, getDocs } from "firebase/firestore";
 
 const profilesRef = collection(db, "profiles");

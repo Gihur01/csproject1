@@ -1,6 +1,7 @@
 "use client"
 import * as React from 'react';
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
@@ -12,25 +13,44 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import {app} from "../../firebase"
-
-
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { app } from "../../firebase"
 
 export default function SignIn() {
   // const [signStatus,setSignStatus]=useState(false)
+  const router = useRouter();
 
+  const [user, setUser] = useState(true);
 
+  useEffect(() => {
+    const auth = getAuth();
+    const monitorAuthState = async () => {
+      onAuthStateChanged(auth, user => {
+        if (user) {
+          console.log(user);
+          router.push("/dashboard")
+        }
+        else{
+          setUser(false)
+        }
+      })
+    };
+    monitorAuthState()
+  }, [router]);
+
+  if (!user){
+
+  
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const email= data.get('email');
-    const password= data.get('password');
+    const email = data.get('email');
+    const password = data.get('password');
     /* console.log({
       email: data.get('email'),
       password: data.get('password'),
     }); */
-    
+
     const auth = getAuth();
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
@@ -38,6 +58,7 @@ export default function SignIn() {
         const user = userCredential.user;
         console.log(user);
         console.log("logged in");
+        router.push("/dashboard")
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -46,6 +67,8 @@ export default function SignIn() {
         alert("Wrong email or password.")
       });
   };
+
+
 
   return (
     <Container component="main" maxWidth="xs">
@@ -110,4 +133,5 @@ export default function SignIn() {
       </Box>
     </Container>
   );
+  }
 }

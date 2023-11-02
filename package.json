@@ -23,6 +23,7 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^8.2.0"
+    "@faker-js/faker": "^8.2.0",
+    "encoding": "^0.1.13"
   }
 }

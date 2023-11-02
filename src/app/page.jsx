@@ -1,5 +1,6 @@
 "use client"
 import * as React from 'react';
+import { useState } from 'react';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
@@ -12,11 +13,14 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import {app} from "@/firebase"
+import {app} from "../../firebase"
 
 
 
 export default function SignIn() {
+  // const [signStatus,setSignStatus]=useState(false)
+
+
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -39,6 +43,7 @@ export default function SignIn() {
         const errorCode = error.code;
         const errorMessage = error.message;
         console.error(errorMessage, errorCode, errorMessage)
+        alert("Wrong email or password.")
       });
   };
 

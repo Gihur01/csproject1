@@ -6,31 +6,35 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { StaticDateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import { Grid, InputLabel, MenuItem, Select, FormControl, Box, Container, Typography, Button } from '@mui/material';
-import { doc, setDoc, getDocs, collection, query, addDoc, Timestamp, where } from "firebase/firestore";
+import { doc, setDoc, getDocs, collection, query, addDoc,  where, updateDoc } from "firebase/firestore";
 import { db } from '../../../../../firebase';
 import { departments, defaultAppTimes } from '@/app/data';
 import { getAuth } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 /* import Datepicker from '@/components/datepicker/Datepicker';
  */
 
 export default function New() {
+	const router = useRouter();
+  const [department, changeDepartment] = useState('');//department chosen in the selection
+  const [appointmentType, changeAppointmentType] = useState('');	//value of type selection on ui
+	const [genericService, setGenericService]= useState(false)		//whether the type allows selecting a department
 
+  const [date, changeDate] = useState(new Date());								//value of TimeDatePicker	
+  const [doctors,changeDoctors]=useState([]);					//List of doctors in the chosen department. list of objs
+	const [selectedDoctor,changeSelectedDoctor] = useState('');		//value (name) of doctor selection on ui
+	const [doctorTimes, setDoctorTimes] =useState([])	//[s1,e1,s2,e2,...]
 
-  //department chosen in the selection
-  const [department, changeDepartment] = useState('');
-  //chosen appointment type from selection
-  const [appointmentType, changeAppointmentType] = useState('');
-  const [appsList, setAppsList] = useState([]);
-  const [date, changeDate] = useState(new Date());
-  const [time, changeTime] = useState();
-  const [doctors,changeDoctors]=useState([]);
-	const [selectedDoctor,changeSelectedDoctor] = useState('');
-	const [genericService, setGenericService]= useState(true)
+	//object of the selected doctor. So I don't need to get it from the list all the time
+	const [doctorInfo,setDoctorInfo] = useState()
 
+	// const [time, changeTime] = useState();
+  // const [appsList, setAppsList] = useState([]);		
+	
 	const auth=getAuth();
 
   //get data on each refresh.
-  useEffect(() => {
+/*   useEffect(() => {
     const fetchData = async () => {
       const appsRef = collection(db, "appointments");
       const querySnapshot = await getDocs(appsRef);
@@ -44,13 +48,13 @@ export default function New() {
     };
 
     fetchData(); // Call the fetchData function when the component mounts
-  }, []); // !!! The empty dependency array ensures this effect runs only once on mount
+  }, []); // !!! The empty dependency array ensures this effect runs only once on mount */
 
   //this gets the list of doctors every time the department changes.
   useEffect(() => {
     const fetchDoctors = async (department) => {
       console.log(department)
-      const depRef = query(collection(db, "profiles"), where("profession","==",department));
+      const depRef = query(collection(db, "doctors"), where("department","==",department));
       const querySnapshot = await getDocs(depRef);
       console.log("read req")
       const tempList = [];
@@ -62,28 +66,46 @@ export default function New() {
     };
 
     fetchDoctors(department); // Call the fetchData function when the component mounts
+		console.log("doctors")
+		console.log(doctors)
   }, [department]);
 
 	//this gets the available time of the selected doctor
   useEffect(() => {
-    const fetchDoctors = async (department) => {
-      console.log(department)
-      const depRef = query(collection(db, "profiles"), where("profession","==",department));
-      const querySnapshot = await getDocs(depRef);
-      console.log("read req")
+    /* const fetchDoctortimes = async () => {
+      console.log(selectedDoctor)
+      const docRef = query(collection(db, "appointments"), where("doctor","==",selectedDoctor));
+      const querySnapshot = await getDocs(docRef);
+      console.log("read req doc times")
+
       const tempList = [];
       querySnapshot.forEach((doc) => {
         tempList.push({ id: doc.id, ...doc.data() });
       });
-      changeDoctors(tempList); // Update state with the fetched data
-      //doctors will be the list for the selection of doctors
+      changeDoctorTimes(tempList[0].unavailableTimes); // Update state with the fetched data
     };
 
-    fetchDoctors(department); // Call the fetchData function when the component mounts
-  }, []);
+    fetchDoctortimes(); // Call the fetchData function when the component mounts */
+
+		//this function gets the object containing doctor profile, and also sotres his unavailable times into a state.
+		for(let d of doctors){
+			if(d.name==selectedDoctor){
+				setDoctorInfo(d)
+				d.unavailableTimes===undefined ? setDoctorTimes([]) : setDoctorTimes(d.unavailableTimes)
+				break;
+			}
+			else{
+				throw new Error("Panik! Doctor profile not found!");
+			}
+		}
+
+		console.log(doctorTimes)
+
+  }, [selectedDoctor]);
 
   function disabledTime(value, view) {
     times = getOccupiedTimes(department, appointmentType)
+		
     let isInRange = false
     /* the "times" will be a list of all time ranges that are occupied.
     each range is a list of length 2, start and finish times
@@ -129,23 +151,49 @@ export default function New() {
 
 	//submits the appointment
   async function handleSubmit() {
+		/* here we need to update the doctor's availability array.
+		assuming each pair of values are start and end dates.
+		every time we change the array, also check for any past times, and delete to reduce calculations.
+		
+		1. find doctorid from the `doctors` state.
+		2. query the doctor. append the time to his array
+		3. delete old times.*/
+
     console.log(date)
     /* here I think the patient ID should be stored, we can replace ID with their name when displaying the apps.
     Unsure about doctors and departments. Because If we all store as IDs, then each person who access the website will
     send 10s of requests every time they visit.
      */
     if (department && appointmentType) {
+			var duration=defaultAppTimes[appointmentType];
+			if(duration===undefined){
+				duration=30;
+			}
+			console.log(duration)
+			console.log(date)
+			const endtime=dayjs(date).add(duration,"m").toDate();
+			console.log(endtime);
       const appobj = {
         patient: auth.currentUser.uid,
         doctor: selectedDoctor,
         department: department,
         type: appointmentType,
         date: date,
+				endtime: endtime
       };
       console.log(appobj);
       const docRef = await addDoc(collection(db, "appointments"), appobj);
       console.log("doc saved.");
 			alert("Your appointment has been saved.")
+
+			//find the doctor's id from the name of the selected doctor.
+			//storing name may be risky as there can be ones with the same name. I assume not, because the chance is small.
+			const doctorRef = doc(db, "doctors", doctorInfo.id);	//gets the doctor profile document
+			setDoctorTimes([...doctorTimes,date,endtime])//push the appointment start and end times to this array
+			await updateDoc(doctorRef, {
+				unavailableTimes: doctorTimes		//update the array in firestore.
+			});
+			router.push("/dashboard");
     }
 		else if(!selectedDoctor){
 			alert("please select Your doctor!")
@@ -162,13 +210,11 @@ export default function New() {
           New Appointment
         </Typography>
         <hr />
-        <Grid
-          sx={{
+        <Grid sx={{
             display: 'flex',
             justifyContent: 'space-around'
           }}
         >
-
           <Box>
             <Typography variant="h6" marginBottom={.5}>
               Select the type of service
@@ -187,19 +233,12 @@ export default function New() {
                   width: 200,
                 }}
               >
+								{/* here are the options to the `Type` selection box. when adding new selections,
+								don't forget the value prop should be exactly the same as in the defaultAppTimes in data.js */}
                 <MenuItem value={"Consultation"}>Consultation</MenuItem>
-                <MenuItem value={"Medical Checkup"}>Medical Checkup</MenuItem>
+                <MenuItem value={"Checkup"}>Checkup</MenuItem>
                 <MenuItem value={"Surgery"}>Surgery</MenuItem>
               </Select>
-
-
-              {/* <Selection menuItems={departments} 
-            LabelId="department-select-label" 
-            label='Department'
-            value={department}
-            onSelection={changeDepartment}
-          /> */}
-
             </FormControl>
           </Box>
 					<Box>
@@ -258,10 +297,8 @@ export default function New() {
             </Select>
           </FormControl>
         </Box>
-
-        {/* <Box border={1} padding={1}>
-          dummy text
-        </Box> */}
+				
+				{/* this part is the time widget */}
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <StaticDateTimePicker
             defaultValue={dayjs()}
@@ -272,18 +309,18 @@ export default function New() {
             }}
             //restrict to only 2 months in the future
             onChange={t => handleTimeChange(t.toDate())}
-          // onAccept={handleTimeAccept}
           />
         </LocalizationProvider>
 
         <Grid display={"flex"} justifyContent={"center"}>
-          <Button
-            onClick={handleSubmit}
-          >
-            Submit</Button>
+          <Button onClick={handleSubmit}>Submit</Button>
         </Grid>
 
       </Container>
+
+
+			{/* testing area! */}
+			<p>{(doctorTimes).toString()}</p>
     </div>
   )
 }

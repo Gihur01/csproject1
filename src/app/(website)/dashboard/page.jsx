@@ -8,13 +8,7 @@ import { getAuth } from 'firebase/auth';
 
 import { db } from '../../../../firebase'
 
-/* const profilesRef = collection(db, "appointments");
-const profileList = []
-const querySnapshot = await getDocs(profilesRef);
-querySnapshot.forEach((doc) => {
-  // doc.data() is never undefined for query doc snapshots
-  profileList.push({id: doc.id, ...doc.data()});
-}); */
+
 
 
 

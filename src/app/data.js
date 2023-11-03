@@ -12,7 +12,7 @@ export const departments =
     ];
 
 export  const defaultAppTimes = {
-    consultation: 60,
-    checkup: 30,
-    surgery: 120,
+    Consultation: 60,
+    Checkup: 30,
+    Surgery: 120,
   }

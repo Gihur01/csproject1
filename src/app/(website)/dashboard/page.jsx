@@ -3,7 +3,8 @@ import React from 'react'
 import { useState, useEffect } from 'react'
 import Appointment from '@/components/appointment/Appointment'
 import { Container, Box, Button, Link } from '@mui/material';
-import { doc, getDocs, collection, query, onSnapshot } from "firebase/firestore"; 
+import {  getDocs, collection, query,  where } from "firebase/firestore"; 
+import { getAuth } from 'firebase/auth';
 
 import { db } from '../../../../firebase'
 
@@ -15,26 +16,11 @@ querySnapshot.forEach((doc) => {
   profileList.push({id: doc.id, ...doc.data()});
 }); */
 
-const testData = [
-  {
-    id: 1,
-    category: "Internal",
-    type: "checkup",
-    time: "3pm-5pm",
-    date: "2023/9/20",
-  },
-  {
-    id: 2,
-    category: "External",
-    type: "consultation",
-    time: "6pm-8pm",
-    date: "2023/9/23",
-  },
-]
 
 
 export default function Dashboard(){
   
+	const auth=getAuth();
   const [appsList, setAppsList] = useState([]);
 
   const readItem= async (item) => {
@@ -43,7 +29,7 @@ export default function Dashboard(){
 
   useEffect(() => {
     const fetchData = async () => {
-      const appsRef = collection(db, "appointments");
+      const appsRef = query(collection(db, "appointments"),where("patient","==",auth.currentUser.uid));
       const querySnapshot = await getDocs(appsRef);
       const tempList = [];
       querySnapshot.forEach((doc) => {
@@ -61,7 +47,7 @@ export default function Dashboard(){
   
 
   return (
-    <div>
+    <>
       <Appointment appointments={appsList} />
       <Box
         display="flex"
@@ -77,7 +63,7 @@ export default function Dashboard(){
           }}>New appointment</Button>
 
       </Box>
-    </div>
+    </>
   )
 }
 

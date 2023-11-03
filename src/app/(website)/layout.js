@@ -12,10 +12,12 @@ export default function RootLayout({ children }) {
 
     useEffect(() => {
         const auth = getAuth();
+				console.log(auth)
         const monitorAuthState = async () => {
             onAuthStateChanged(auth, user => {
                 if (user) {
                     console.log(user);
+										console.log(user.uid);
                     setUser(true);
                 }
                 else {

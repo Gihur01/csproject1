@@ -9,6 +9,7 @@ import { Grid, InputLabel, MenuItem, Select, FormControl, Box, Container, Typogr
 import { doc, setDoc, getDocs, collection, query, addDoc, Timestamp, where } from "firebase/firestore";
 import { db } from '../../../../../firebase';
 import { departments, defaultAppTimes } from '@/app/data';
+import { getAuth } from 'firebase/auth';
 /* import Datepicker from '@/components/datepicker/Datepicker';
  */
 
@@ -20,9 +21,12 @@ export default function New() {
   //chosen appointment type from selection
   const [appointmentType, changeAppointmentType] = useState('');
   const [appsList, setAppsList] = useState([]);
-  const [date, changeDate] = useState();
+  const [date, changeDate] = useState(new Date());
   const [time, changeTime] = useState();
   const [doctors,changeDoctors]=useState([]);
+	const [selectedDoctor,changeSelectedDoctor] = useState('');
+
+	const auth=getAuth();
 
   //get data on each refresh.
   useEffect(() => {
@@ -78,13 +82,10 @@ export default function New() {
     return isInRange;
   }
 
-  //async function to write to db
+  //change time state whenever user selects a time
   function handleTimeChange(t) {
     console.log(t)
     if (t) {
-      /* console.log(t.year());
-      console.log(t.month());
-      console.log(t.date()); */
       changeDate(t)
     }
   }
@@ -97,7 +98,8 @@ export default function New() {
     console.log(doctors)
   }
 
-  async function handleSubmit(e) {
+	//submits the appointment
+  async function handleSubmit() {
     console.log(date)
     /* here I think the patient ID should be stored, we can replace ID with their name when displaying the apps.
     Unsure about doctors and departments. Because If we all store as IDs, then each person who access the website will
@@ -105,8 +107,8 @@ export default function New() {
      */
     if (department && appointmentType) {
       const appobj = {
-        patient: 1,
-        doctor: 1,
+        patient: auth.currentUser.uid,
+        doctor: selectedDoctor,
         department: department,
         type: appointmentType,
         date: date,
@@ -114,7 +116,11 @@ export default function New() {
       console.log(appobj);
       const docRef = await addDoc(collection(db, "appointments"), appobj);
       console.log("doc saved.");
+			alert("Your appointment has been saved.")
     }
+		else if(!selectedDoctor){
+			alert("please select Your doctor!")
+		}
     else {
       alert("please select department and type!")
     }
@@ -200,19 +206,21 @@ export default function New() {
           </Typography>
 
           <FormControl fullWidth>
-            <InputLabel id="select-doctor-label">Type</InputLabel>
+            <InputLabel id="select-doctor-label">Doctor</InputLabel>
             <Select
               labelId="select-doctor-label"
               id="doctor-select"
-              value={appointmentType}
+              value={selectedDoctor}
               label="Select a doctor"
-              onChange={e => changeAppointmentType(e.target.value)}
+              onChange={e => changeSelectedDoctor(e.target.value)}
               sx={{
                 width: 200,
               }}
             >
               {doctors.map(e=>(
-                <MenuItem key={e.id} value={e.id}>{e.name}</MenuItem>
+                <MenuItem key={e.id} value={e.name}>{e.name}</MenuItem>
+								//I hereby assume that no two doctors in the clinic have the same name. 
+								//The chance of this happening in real life is negligible.
               ))}
             </Select>
           </FormControl>

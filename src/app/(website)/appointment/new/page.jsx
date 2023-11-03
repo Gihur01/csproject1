@@ -25,6 +25,7 @@ export default function New() {
   const [time, changeTime] = useState();
   const [doctors,changeDoctors]=useState([]);
 	const [selectedDoctor,changeSelectedDoctor] = useState('');
+	const [genericService, setGenericService]= useState(true)
 
 	const auth=getAuth();
 
@@ -63,6 +64,24 @@ export default function New() {
     fetchDoctors(department); // Call the fetchData function when the component mounts
   }, [department]);
 
+	//this gets the available time of the selected doctor
+  useEffect(() => {
+    const fetchDoctors = async (department) => {
+      console.log(department)
+      const depRef = query(collection(db, "profiles"), where("profession","==",department));
+      const querySnapshot = await getDocs(depRef);
+      console.log("read req")
+      const tempList = [];
+      querySnapshot.forEach((doc) => {
+        tempList.push({ id: doc.id, ...doc.data() });
+      });
+      changeDoctors(tempList); // Update state with the fetched data
+      //doctors will be the list for the selection of doctors
+    };
+
+    fetchDoctors(department); // Call the fetchData function when the component mounts
+  }, []);
+
   function disabledTime(value, view) {
     times = getOccupiedTimes(department, appointmentType)
     let isInRange = false
@@ -97,6 +116,16 @@ export default function New() {
     };
     console.log(doctors)
   }
+
+	function handleChangeAppointmentType(value){
+		if (["Consultation", "Diagnosis"].includes(value)){
+			setGenericService(true);
+		}
+		else {
+			setGenericService(false);
+		}
+		changeAppointmentType(value);
+	}
 
 	//submits the appointment
   async function handleSubmit() {
@@ -139,33 +168,6 @@ export default function New() {
             justifyContent: 'space-around'
           }}
         >
-          <Box>
-
-            <Typography variant="h6" marginBottom={.5}>
-              Select a department
-            </Typography>
-
-            <FormControl fullWidth>
-
-              <InputLabel id="department-select-label">Department</InputLabel>
-              <Select
-                labelId="department-select-label"
-                id="department-select"
-                value={department}
-                label="Department"
-                onChange={e => handleDepartmentChange(e.target.value)}
-
-                sx={{
-                  width: 200,
-                  marginBottom: 2,
-                }}
-              >
-                {departments.map((department) => {
-                  return (<MenuItem key={department.id} value={department.name}>{department.name}</MenuItem>)
-                })}
-              </Select>
-            </FormControl>
-          </Box>
 
           <Box>
             <Typography variant="h6" marginBottom={.5}>
@@ -179,13 +181,14 @@ export default function New() {
                 id="type-select"
                 value={appointmentType}
                 label="Type"
-                onChange={e => changeAppointmentType(e.target.value)}
+                onChange={e => handleChangeAppointmentType(e.target.value)}
+								
                 sx={{
                   width: 200,
                 }}
               >
                 <MenuItem value={"Consultation"}>Consultation</MenuItem>
-                <MenuItem value={"Checkup"}>Checkup</MenuItem>
+                <MenuItem value={"Medical Checkup"}>Medical Checkup</MenuItem>
                 <MenuItem value={"Surgery"}>Surgery</MenuItem>
               </Select>
 
@@ -199,6 +202,36 @@ export default function New() {
 
             </FormControl>
           </Box>
+					<Box>
+
+						<Typography variant="h6" marginBottom={.5}>
+							Select a department
+						</Typography>
+
+						<FormControl fullWidth>
+
+							<InputLabel id="department-select-label">Department</InputLabel>
+							<Select
+								labelId="department-select-label"
+								id="department-select"
+								value={genericService ? "Generic" : department}
+								label="Department"
+								onChange={e => handleDepartmentChange(e.target.value)}
+								disabled={genericService}
+								
+								
+								sx={{
+									width: 200,
+									marginBottom: 2,
+								}}
+							>
+								{departments.map((department) => {
+									return (<MenuItem key={department.id} value={department.name}>{department.name}</MenuItem>)
+								})}
+								{genericService ? <MenuItem value="Generic">Generic</MenuItem> : null}
+							</Select>
+						</FormControl>
+					</Box>
         </Grid>
         <Box>
           <Typography variant="h6" marginBottom={.5}>
@@ -233,7 +266,7 @@ export default function New() {
           <StaticDateTimePicker
             defaultValue={dayjs()}
             disablePast
-            minutesStep={10} //only whole 10 min times will be selectable
+            minutesStep={15} //only whole quarter times will be selectable. This simplifies selection.
             sx={{
               maxWidth: 400,
             }}

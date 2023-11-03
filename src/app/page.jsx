@@ -23,6 +23,8 @@ export default function SignIn() {
 
   useEffect(() => {
     const auth = getAuth();
+		
+
     const monitorAuthState = async () => {
       onAuthStateChanged(auth, user => {
         if (user) {

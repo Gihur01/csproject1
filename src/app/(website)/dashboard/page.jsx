@@ -17,13 +17,12 @@ export default function Dashboard(){
 	const auth=getAuth();
   const [appsList, setAppsList] = useState([]);
 
-  const readItem= async (item) => {
-    e.preventDefault();
-  }
+
+
 
   useEffect(() => {
-    const fetchData = async () => {
-      const appsRef = query(collection(db, "appointments"),where("patient","==",auth.currentUser.uid));
+    const fetchData = async (colName,field,value) => {
+      const appsRef = query(collection(db, colName),where(field,"==",value));
       const querySnapshot = await getDocs(appsRef);
       const tempList = [];
       querySnapshot.forEach((doc) => {
@@ -32,6 +31,9 @@ export default function Dashboard(){
       setAppsList(tempList); // Update state with the fetched data
       
     };
+		
+
+		auth.currentUser.uid
 
     fetchData(); // Call the fetchData function when the component mounts
     console.log(appsList);

@@ -6,7 +6,6 @@ import { Timestamp } from 'firebase/firestore';
 
 const Appointment = ({ appointments }) => {
 	console.log(appointments)
-	// console.log(appointments[0].date.toDate())
 	if (appointments) {
 		return (
 			<div>

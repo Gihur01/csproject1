@@ -5,14 +5,14 @@
 }
  */
 
-export function getDatesInSameMonth(dateArray, targetDate) {
+/* export function getDatesInSameMonth(dateArray, targetDate) {
   const targetMonth = targetDate.getMonth();
   const targetYear = targetDate.getFullYear();
 
   return dateArray.filter((date) => {
     return date.getMonth() === targetMonth && date.getFullYear() === targetYear;
   });
-}
+} */
 
 export function getDatesInSameDay(dateArray, targetDate) {
   const targetDay = targetDate.getMonth();
@@ -36,4 +36,8 @@ export function getDatesWithinFiveMonths(dateArray) {
   return dateArray.filter((date) => {
     return date >= today && date <= fiveMonthsFromToday;
   });
+}
+
+export function getTime(date) {
+	return date.getHours() + ":" + date.getMinutes()
 }

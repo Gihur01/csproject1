@@ -1,12 +1,22 @@
 "use cllient"
 import React from 'react'
 import { Container, Box, List, ListItem, ListItemButton, ListItemText, Typography } from '@mui/material';
-import { Timestamp } from 'firebase/firestore';
+import { getTime } from '@/utilities/dateOps';
 
 
-const Appointment = ({ appointments }) => {
-	console.log(appointments)
-	if (appointments) {
+
+const Appointment = ({ appointments,doctors }) => {
+
+	if (appointments!=[]) {
+		if(doctors){
+			for (let a of appointments){
+				for (let d of doctors){
+					if (a.doctor==d.id){
+						a.doctor=d.name;
+					}
+				}
+			}
+		}
 		return (
 			<div>
 				<Container sx={{
@@ -21,16 +31,17 @@ const Appointment = ({ appointments }) => {
 						{appointments.map((app,id) => (
 							<ListItem key={id} disablePadding>
 								<ListItemButton>
-									<ListItemText primary={app.type} secondary={
+									<ListItemText primary={app.type+" - Dr."+app.doctor} secondary={
 										<Box sx={{
 											display: 'flex',
 											alignItems: 'center',
 											justifyContent: 'space-between',
 											width: '50%',
 										}}>
-											<span>{new Date(parseInt(app.date.seconds)*1000).toLocaleDateString() }</span>
+											<span>{new Date(app.dateTime.seconds*1000).toLocaleDateString() }</span>
+											<span>{new Date(app.dateTime.seconds*1000).toLocaleTimeString()}</span>
 											<span>{app.department}</span>
-											<span>{app.doctor}</span>
+											{/* <span>{}</span> */}
 										</Box>
 									} />
 								</ListItemButton>
@@ -42,9 +53,11 @@ const Appointment = ({ appointments }) => {
 	}
 	else {
 		return (
-			<Typography>
+			<Box display={'flex'} justifyContent={"center"} margin={5}>
+			<Typography variant={"h4"}>
 				You have no appointments.
 			</Typography>
+			</Box>
 		)
 	}
 

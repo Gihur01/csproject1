@@ -11,7 +11,7 @@ import { db } from '../../../../../firebase';
 import { departments, defaultAppTimes, avaliableHours } from '@/app/data';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { getDatesInSameMonth, addHoursToDate, getDatesWithinFiveMonths } from '@/utilities/dateOps'
+import { addHoursToDate, getTime } from '@/utilities/dateOps'
 /* import Datepicker from '@/components/datepicker/Datepicker';
  */
 
@@ -22,39 +22,19 @@ export default function New() {
 	const [genericService, setGenericService] = useState(false)		//whether the type allows selecting a department
 
 	const [date, changeDate] = useState(dayjs());				//value of DatePicker	
-	const [time, changeTime] = useState(dayjs());				//value of Hour selector
+	const [time, changeTime] = useState('');				//value of Hour selector
 	// const [selectedDay, setSelectedDay] = useState(0);
 	const [doctors, changeDoctors] = useState([]);					//List of doctors in the chosen department. list of objs
 	const [selectedDoctor, changeSelectedDoctor] = useState('');		//value (name) of doctor selection on ui
-	const [doctorTimes, setDoctorTimes] = useState([])	//[s1,e1,s2,e2,...]
-	const [timeToDisable, setTimeToDisable] = useState([])	//same as above but only current day
+	const [doctorTimes, setDoctorTimes] = useState([])	//[t1,t2,t3,...]		if want a range: [s1,e1,s2,e2,...] but not enough time to implement
+	const [timesToDisplay, setTimesToDisplay] = useState([])	//same as above but only current day
 
 	//object of the selected doctor. So I don't need to get it from the list all the time
 	const [doctorInfo, setDoctorInfo] = useState()
 
-	// const [time, changeTime] = useState();
-	// const [appsList, setAppsList] = useState([]);		
+	const duration = 30;	//duration of each appointment. This is fixed to remove time range complications. may set free in future.
+	const auth = getAuth();		//auth object used for storing the user's uid into the appointment.
 
-	const auth = getAuth();
-
-	//get data on each refresh.
-	/*   useEffect(() => {
-			const fetchData = async () => {
-				const appsRef = collection(db, "appointments");
-				const querySnapshot = await getDocs(appsRef);
-				console.log("read req")
-				const tempList = [];
-				querySnapshot.forEach((doc) => {
-					tempList.push({ id: doc.id, ...doc.data() });
-				});
-				setAppsList(tempList); // Update state with the fetched data
-				console.log(appsList);
-			};
-	
-			fetchData(); // Call the fetchData function when the component mounts
-		}, []); // !!! The empty dependency array ensures this effect runs only once on mount */
-
-	//this gets the list of doctors every time the department changes.
 	useEffect(() => {
 		const fetchDoctors = async (department) => {
 			console.log(department)
@@ -66,12 +46,12 @@ export default function New() {
 				tempList.push({ id: doc.id, ...doc.data() });
 			});
 			changeDoctors(tempList); // Update state with the fetched data
+			console.log("doctors")
+			console.log(tempList);
 			//doctors will be the list for the selection of doctors
 		};
 
 		fetchDoctors(department); // Call the fetchData function when the component mounts
-		console.log("doctors")
-		console.log(doctors)
 	}, [department]);
 
 	//this gets the available time of the selected doctor
@@ -95,6 +75,7 @@ export default function New() {
 			if (d.name == selectedDoctor) {
 				setDoctorInfo(d)
 				d.unavailableTimes === undefined ? setDoctorTimes([]) : setDoctorTimes(d.unavailableTimes)
+				console.log(d.unavailableTimes);
 				break;
 			}
 			else {
@@ -106,24 +87,17 @@ export default function New() {
 
 	}, [selectedDoctor]);
 
+	//this filters the doctor's unavailable times in the same day as `date`, and sets the times to display in selection.
 	useEffect(() => {
 		console.log(doctorTimes)
 		console.log(date)
-		/* if (selectedDay != date.getDate()) {
-			setSelectedDay(date.getDate());
-			console.log("changed selectedDay")
-			
-		} */
-
-		setTimeToDisable(
-			doctorTimes.filter(d => dayjs(d.seconds * 1000).date() == date.date()).map(d => new Date(d.seconds * 1000).toTimeString()),
-		)
-		console.log("Times to disable:")
-		console.log(timeToDisable)
-		// console.log(timeToDisable)
+		const timestoDisable = doctorTimes.filter(d => dayjs(d.seconds * 1000).date() == date.date())
+			.map(d => getTime(new Date(d.seconds * 1000)));
+		setTimesToDisplay(avaliableHours.filter(n => !timestoDisable.includes(n)));
 	}, [date])
 
-	function disabledTime(startTime, view) {
+	// this function is used to disable times from the timepicker. timepicker is not used anymore.
+	/* function disabledTime(startTime, view) {
 		for (let i = 0; i < timeToDisable.length; i += 2) {
 			const rangeStart = timeToDisable[i];
 			const rangeEnd = timeToDisable[i + 1];
@@ -138,18 +112,13 @@ export default function New() {
 			}
 		}
 		return false; // No overlap found
-	}
-
-	
-
+	} */
 	//change time state whenever user selects a time
 	function handleTimeChange(t) {
 		console.log(t)
 		if (t) {
 			changeDate(t)
-
 		}
-
 	}
 
 	function handleDepartmentChange(value) {
@@ -192,40 +161,50 @@ export default function New() {
 		3. delete old times.*/
 
 		console.log(date)
-		/* here I think the patient ID should be stored, we can replace ID with their name when displaying the apps.
-		Unsure about doctors and departments. Because If we all store as IDs, then each person who access the website will
-		send 10s of requests every time they visit.
-		 */
-		if (department && appointmentType) {
-			var duration = defaultAppTimes[appointmentType];
-			if (duration === undefined) {
-				duration = 30;
-			}
-			console.log(duration)
+		if (department && appointmentType) {	//if the department and service are selected, otherwise reject
+			const now = new Date()
+			// var duration = defaultAppTimes[appointmentType];
+			// if (duration === undefined) {
+			// 	duration = 30;
+			// }
+			
 			console.log(date)
-			const endtime = dayjs(date).add(duration, "m").toDate();
-			console.log(endtime);
-			const appobj = {
-				patient: auth.currentUser.uid,
-				doctor: selectedDoctor,
-				department: department,
-				type: appointmentType,
-				date: date,
-				endtime: endtime
-			};
-			console.log(appobj);
-			const docRef = await addDoc(collection(db, "appointments"), appobj);
-			console.log("doc saved.");
-			alert("Your appointment has been saved.")
+			// const endtime = dayjs(date).add(duration, "m").toDate();		//endtime not used, we implement time range in future.
 
-			//find the doctor's id from the name of the selected doctor.
-			//storing name may be risky as there can be ones with the same name. I assume not, because the chance is small.
-			const doctorRef = doc(db, "doctors", doctorInfo.id);	//gets the doctor profile document
-			setDoctorTimes([...doctorTimes, date, endtime])//push the appointment start and end times to this array
-			await updateDoc(doctorRef, {
-				unavailableTimes: doctorTimes		//update the array in firestore.
-			});
-			router.push("/dashboard");
+			const [tempHour, tempMinute] = time.split(":")
+			const dateTime = date.set("h", tempHour).set("minute", tempMinute).set("second",0).toDate();
+			console.log(dateTime)
+			if (dateTime > now) {
+
+				const appobj = {
+					patient: auth.currentUser.uid,
+					doctor: doctorInfo.id,
+					department: department,
+					type: appointmentType,
+					dateTime: dateTime,
+					duration: duration,
+				};
+				console.log(appobj);
+				const docRef = await addDoc(collection(db, "appointments"), appobj);
+				console.log("doc saved.");
+				alert("Your appointment has been saved.")
+
+				//find the doctor's id from the name of the selected doctor.
+				//storing name may be risky as there can be ones with the same name. I assume not, because the chance is small.
+				const doctorRef = doc(db, "doctors", doctorInfo.id);	//gets the doctor profile document
+				const newTimes = doctorTimes.filter(d => d > now);
+				newTimes.push(date.toDate());
+				//push the appointment start and end times to this array
+				await updateDoc(doctorRef, {
+					unavailableTimes: newTimes		//update the array in firestore.
+				});
+				setDoctorTimes(newTimes)
+				console.log(newTimes);
+				router.push("/dashboard");
+			}
+			else{
+				alert("Your selected time has already passed. Please select another");
+			}
 		}
 		else if (!selectedDoctor) {
 			alert("please select Your doctor!")
@@ -238,161 +217,148 @@ export default function New() {
 	return (
 		<div>
 			<Container component="main" maxWidth="lg" sx={{}}>
-			<LocalizationProvider dateAdapter={AdapterDayjs}>
-				<Typography variant="h4" marginBottom={3} marginTop={3} align='center'>
-					New Appointment
-				</Typography>
-				<hr />
-				<Grid sx={{
-					display: 'flex',
-					justifyContent: 'space-around'
-				}}
-				>
-					<Box>
-						<Typography variant="h6" marginBottom={.5}>
-							Select the type of service
-						</Typography>
-
-						<FormControl fullWidth>
-							<InputLabel id="select-type-label">Type</InputLabel>
-							<Select
-								labelId="select-type-label"
-								id="type-select"
-								value={appointmentType}
-								label="Type"
-								onChange={e => handleChangeAppointmentType(e.target.value)}
-
-								sx={{
-									width: 200,
-								}}
-							>
-								{/* here are the options to the `Type` selection box. when adding new selections,
-								don't forget the value prop should be exactly the same as in the defaultAppTimes in data.js */}
-								<MenuItem value={"Consultation"}>Consultation</MenuItem>
-								<MenuItem value={"Checkup"}>Checkup</MenuItem>
-								<MenuItem value={"Surgery"}>Surgery</MenuItem>
-							</Select>
-						</FormControl>
-					</Box>
-					<Box>
-
-						<Typography variant="h6" marginBottom={.5}>
-							Select a department
-						</Typography>
-
-						<FormControl fullWidth>
-
-							<InputLabel id="department-select-label">Department</InputLabel>
-							<Select
-								labelId="department-select-label"
-								id="department-select"
-								value={genericService ? "Generic" : department}
-								label="Department"
-								onChange={e => handleDepartmentChange(e.target.value)}
-								disabled={genericService}
-
-
-								sx={{
-									width: 200,
-									marginBottom: 2,
-								}}
-							>
-								{departments.map((department) => {
-									return (<MenuItem key={department.id} value={department.name}>{department.name}</MenuItem>)
-								})}
-								{genericService ? <MenuItem value="Generic">Generic</MenuItem> : null}
-							</Select>
-						</FormControl>
-					</Box>
-				</Grid>
-				<Box>
-					<Typography variant="h6" marginBottom={.5}>
-						Select a doctor
+				<LocalizationProvider dateAdapter={AdapterDayjs}>
+					<Typography variant="h4" marginBottom={3} marginTop={3} align='center'>
+						New Appointment
 					</Typography>
+					<hr />
+					<Grid sx={{
+						display: 'flex',
+						justifyContent: 'space-around'
+					}}
+					>
+						<Box>
+							<Typography variant="h6" marginBottom={.5}>
+								Select the type of service
+							</Typography>
 
-					<FormControl fullWidth>
-						<InputLabel id="select-doctor-label">Doctor</InputLabel>
-						<Select
-							labelId="select-doctor-label"
-							id="doctor-select"
-							value={selectedDoctor}
-							label="Select a doctor"
-							onChange={e => changeSelectedDoctor(e.target.value)}
-							sx={{
-								width: 200,
-							}}
-						>
-							{doctors.map(e => (
-								<MenuItem key={e.id} value={e.name}>{e.name}</MenuItem>
-								//I hereby assume that no two doctors in the clinic have the same name. 
-								//The chance of this happening in real life is negligible.
-							))}
-						</Select>
-					</FormControl>
-				</Box>
+							<FormControl fullWidth>
+								<InputLabel id="select-type-label">Type</InputLabel>
+								<Select
+									labelId="select-type-label"
+									id="type-select"
+									value={appointmentType}
+									label="Type"
+									onChange={e => handleChangeAppointmentType(e.target.value)}
 
-				{/* this part is the time widget */}
-				<br />
-				<Typography variant="h6" marginBottom={.5}>
-					Select the time
-				</Typography>
-					<DateTimePicker
-						defaultValue={dayjs()}
-						// value={date}
-						disabled={selectedDoctor ? false : true}
-						disablePast
-						minutesStep={15} //only whole quarter times will be selectable. This simplifies selection.
-						// minDateTime={dayjs().add(5,"hour")}  //this doesnt work...
-						minTime={dayjs().set("h", 8)}
-						// maxTime={dayjs().set("h",20)}
-						maxDate={dayjs().add(5, "M")}
-						// onOpen={handleOpenPicker}
-						/* sx={{
-							maxWidth: 400,
-						}} */
-						//restrict to only 5 months in the future
+									sx={{
+										width: 200,
+									}}
+								>
+									{/* here are the options to the `Type` selection box. when adding new selections,
+								don't forget the value prop should be exactly the same as in the defaultAppTimes in data.js */}
+									<MenuItem value={"Consultation"}>Consultation</MenuItem>
+									<MenuItem value={"Checkup"}>Checkup</MenuItem>
+									<MenuItem value={"Surgery"}>Surgery</MenuItem>
+								</Select>
+							</FormControl>
+						</Box>
+						<Box>
 
-						onChange={t => /* handleTimeChange */changeDate(t)}
+							<Typography variant="h6" marginBottom={.5}>
+								Select a department
+							</Typography>
+
+							<FormControl fullWidth>
+
+								<InputLabel id="department-select-label">Department</InputLabel>
+								<Select
+									labelId="department-select-label"
+									id="department-select"
+									value={genericService ? "Generic" : department}
+									label="Department"
+									onChange={e => handleDepartmentChange(e.target.value)}
+									disabled={genericService}
+
+
+									sx={{
+										width: 200,
+										marginBottom: 2,
+									}}
+								>
+									{departments.map((department) => {
+										return (<MenuItem key={department.id} value={department.name}>{department.name}</MenuItem>)
+									})}
+									{genericService ? <MenuItem value="Generic">Generic</MenuItem> : null}
+								</Select>
+							</FormControl>
+						</Box>
+					</Grid>
+					<Box>
+						<Typography variant="h6" marginBottom={.5}>
+							Select a doctor
+						</Typography>
+
+						<FormControl fullWidth>
+							<InputLabel id="select-doctor-label">Doctor</InputLabel>
+							<Select
+								labelId="select-doctor-label"
+								id="doctor-select"
+								value={selectedDoctor}
+								label="Select a doctor"
+								onChange={e => changeSelectedDoctor(e.target.value)}
+								sx={{
+									width: 200,
+								}}
+							>
+								{doctors.map(e => (
+									<MenuItem key={e.id} value={e.name}>{e.name}</MenuItem>
+									//I hereby assume that no two doctors in the clinic have the same name. 
+									//The chance of this happening in real life is negligible.
+								))}
+							</Select>
+						</FormControl>
+					</Box >
+					<Box marginTop={2}>
+
+						{/* this part is the time widget */}
+						<Typography variant="h6" marginBottom={.5}>
+							Select the date
+						</Typography>
+						<DatePicker
+							defaultValue={dayjs()}
+							// value={date}
+							disabled={selectedDoctor ? false : true}
+							disablePast
+							// minutesStep={15} //only whole quarter times will be selectable. This simplifies selection.
+							// minDateTime={dayjs().add(5,"hour")}  //this doesnt work...
+							maxDate={dayjs().add(5, "M")}
+							/* sx={{
+								maxWidth: 400,
+							}} */
+							//restrict to only 5 months in the future
+
+							onChange={t => /* handleTimeChange */changeDate(t)}
 						// shouldDisableTime={shouldDisableTime}
-					/>
+						/>
+					</Box>
 
-					{/* <TimePicker 
-						value={time}
-						onChange={t=>changeTime(t)}
-						minTime={dayjs().set("h", 8)}
-						maxTime={dayjs().set("h", 20)}
-						shouldDisableTime={}
-					
-					/> */}
+					<Box marginTop={2}>
+						<Typography variant="h6" marginBottom={.5}>
+							Select a Time
+						</Typography>
+
+						<FormControl fullWidth>
+							<InputLabel id="select-time-label">Time</InputLabel>
+							<Select
+								labelId="select-time-label" id="time-select" label="Select a time slot"
+								value={time}
+								disabled={selectedDoctor ? false : true}
+								onChange={e => changeTime(e.target.value)}
+								sx={{
+									width: 200,
+								}}
+							>
+								{timesToDisplay.map((e, index) => (
+									<MenuItem key={index} value={e}>{e}</MenuItem>
+									//I hereby assume that no two doctors in the clinic have the same name. 
+									//The chance of this happening in real life is negligible.
+								))}
+							</Select>
+						</FormControl>
+					</Box>
 
 				</LocalizationProvider>
-
-				<Box>
-					<Typography variant="h6" marginBottom={.5}>
-						Select a Time
-					</Typography>
-
-					<FormControl fullWidth>
-						<InputLabel id="select-time-label">Time</InputLabel>
-						<Select
-							labelId="select-time-label"
-							id="time-select"
-							value={time}
-							label="Select a time slot"
-							onChange={e => changeTime(e.target.value)}
-							sx={{
-								width: 200,
-							}}
-						>
-							{doctors.map(e => (
-								<MenuItem key={e.id} value={e.name}>{e.name}</MenuItem>
-								//I hereby assume that no two doctors in the clinic have the same name. 
-								//The chance of this happening in real life is negligible.
-							))}
-						</Select>
-					</FormControl>
-				</Box>
-
 
 
 				<Grid display={"flex"} justifyContent={"center"}>
@@ -408,7 +374,7 @@ export default function New() {
 			<p>{doctorTimes.map(d => dayjs(d.seconds * 1000).date()).toString()}</p>
 			<br />
 
-			<p>{timeToDisable.toString()}</p>
+			<p>{timesToDisplay.toString()}</p>
 			<br />
 			<p>{dayjs().add(5, "h").toString()}</p>
 		</div>

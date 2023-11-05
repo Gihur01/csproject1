@@ -15,11 +15,12 @@
 } */
 
 export function getDatesInSameDay(dateArray, targetDate) {
-  const targetDay = targetDate.getMonth();
+	const targetDay = targetDate.getDate();
+  const targetMonth = targetDate.getMonth();
   const targetYear = targetDate.getFullYear();
 
   return dateArray.filter((date) => {
-    return date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+    return date.getMonth() === targetMonth && date.getFullYear() === targetYear && date.getDate() === targetDay;
   });
 }
 

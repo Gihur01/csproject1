@@ -34,10 +34,11 @@ export default function Dashboard(){
       });
 			
       setAppsList(tempList); // Update state with the fetched data
+			console.log(tempList); //
     };
 		auth.currentUser.uid
     fetchData(); // Call the fetchData function when the component mounts
-    console.log(appsList);
+    
   }, [router.asPath]); // The empty dependency array ensures this effect runs only once on mount
 
 	useEffect(() => {

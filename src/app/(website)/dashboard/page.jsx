@@ -17,10 +17,24 @@ import { create } from '@mui/material/styles/createTransitions';
 export default function Dashboard(){
   
 	const auth=getAuth();
+	const user= getAuth().currentUser;
   const [appsList, setAppsList] = useState([]);
 	const [doctors,setDoctors] = useState([]);
 	const router=useRouter();
+	const [role,setRole] = useState("user");
 
+	if(user){
+		user.getIdToken()
+		.then((idToken) => {
+      if(user.customClaims && user.customClaims.doctor === true){
+				setRole("doctor")
+			}
+      console.log(user.customClaims); // This will contain the custom claims.
+    })
+    .catch((error) => {
+      console.error("Error getting ID token:", error);
+    });
+	}
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,8 +69,9 @@ export default function Dashboard(){
 		fetchData();
 	}, []); //
   
-
-  return (
+	
+	if(role =="user"){
+		return (
     <>
 			
       <Appointment appointments={appsList} doctors={doctors} />
@@ -76,5 +91,10 @@ export default function Dashboard(){
       </Box>
     </>
   )
+	}
+	else if(role =="doctor"){
+		return 
+	}
+  
 }
 

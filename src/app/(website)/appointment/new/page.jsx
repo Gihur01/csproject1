@@ -369,14 +369,14 @@ export default function New() {
 
 
 			{/* testing area! */}
-			<p>{doctorTimes.map(d => dayjs(d.seconds * 1000)).toString()}</p>
+			{/* <p>{doctorTimes.map(d => dayjs(d.seconds * 1000)).toString()}</p>
 			<br />
 			<p>{doctorTimes.map(d => dayjs(d.seconds * 1000).date()).toString()}</p>
 			<br />
 
 			<p>{timesToDisplay.toString()}</p>
 			<br />
-			<p>{dayjs().add(5, "h").toString()}</p>
+			<p>{dayjs().add(5, "h").toString()}</p> */}
 		</div>
 	)
 }

@@ -2,8 +2,8 @@
 
 This is a demo medical appointment system for a school CS project.
 
-The system is made using Next.js, a full-stack react framework that can implement page routing as well as managing the backend.
-The UI is built with MaterialUI using its react components
+The system is made with react and Next.js,
+with the ui built using MaterialUI's react components. 
 The database and authentication system is made using firestore.
 
 ## Current Features:
